@@ -12,6 +12,16 @@ export class SitesService {
     this.logger.debug("SitesService constructor");
   }
 
+  getStatus() {
+    return this.network.status();
+  }
+
+  findAll() {
+    this.network.getWebList();
+
+    return `This action returns all sites`;
+  }
+
   findAllIngresses() {
     this.logger.debug("Get all ingresses");
     const ingresses = this.kube.listIngressResources("ghostcloud");
@@ -22,12 +32,6 @@ export class SitesService {
 
   create(createSiteDto: CreateSiteDto) {
     return 'This action adds a new site';
-  }
-
-  findAll() {
-    this.network.getWebInfo();
-
-    return `This action returns all sites`;
   }
 
   findOne(id: number) {

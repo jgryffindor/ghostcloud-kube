@@ -24,6 +24,12 @@ export class SitesController {
     return this.sites.create(createSiteDto);
   }
 
+  @Get("status")
+  status() {
+    this.logger.debug("Get all sites");
+    return this.sites.getStatus();
+  }
+
   @Get()
   findAll() {
     this.logger.debug("Get all sites");

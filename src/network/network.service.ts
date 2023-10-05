@@ -24,8 +24,8 @@ export class NetworkService {
   }
 
   async getWebList() {
-    const list = await this.network.web.list();
-    this.logger.debug(JSON.stringify(list));
+    const list = await this.network.web.list({});
+    this.logger.debug(JSON.stringify(list, undefined, 4));
     return list;
   }
 }
