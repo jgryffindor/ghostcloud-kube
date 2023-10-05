@@ -29,23 +29,43 @@ export class KubeService {
 
   // kc.loadFromCluster();
 
-  async listIngressResources(namespace: string) {
-    const ingressList = { body: "empty" };
+  async getIngressNames(namespace: string) {
+    const ingressNames = [];
+
     try {
+      // Get a list of all ingress resources in a namespace
       const ingressList = await this.k8sNetworkApi.listNamespacedIngress(
         namespace,
       );
-      console.log("Ingress resources in namespace:", ingressList.body);
-      const ingressNames = ingressList.body.items.map(
-        (ingress) => ingress.metadata?.name,
-      );
-      console.log("Ingress names:", ingressNames);
+
+      ingressList.body.items.forEach((ingress) => {
+        const name = ingress.metadata?.name;
+        if (name) {
+          ingressNames.push(name);
+        }
+      });
+      this.logger.debug(`Ingress names: ${ingressNames}`);
     } catch (error) {
-      ingressList.body = error;
-      console.error("Error listing Ingress resources:", error);
+      this.logger.error(`Error listing Ingress resources: ${error}`);
+      return error.body.message;
     }
 
-    // Replace 'your-namespace' with the actual namespace
-    return ingressList.body;
+    return ingressNames;
+  }
+
+  async getIngress(namespace: string, name: string) {
+    // const ingress = { body: "empty" };
+    let ingress;
+
+    try {
+      // Get a list of all ingress resources in a namespace
+      ingress = await this.k8sNetworkApi.readNamespacedIngress(name, namespace);
+      this.logger.debug(`Single Ingress: ${ingress}`);
+    } catch (error) {
+      this.logger.error(`Error listing Ingress resources: ${error}`);
+      return error.body.message;
+    }
+
+    return ingress;
   }
 }
