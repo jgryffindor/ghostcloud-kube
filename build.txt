@@ -1,3 +1,0 @@
-## Build Docker Container
-
-docker buildx build --platform linux/amd64 -t jgriffin555/ghostcloud-kube:0.1.0 . -- push
