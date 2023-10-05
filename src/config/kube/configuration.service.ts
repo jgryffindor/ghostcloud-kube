@@ -19,4 +19,7 @@ export class KubeConfigService {
   get apiUrl() {
     return this.configService.get<string>("kube.apiUrl");
   }
+  get proxyServiceName(){
+    return this.configService.get<string>("kube.proxyServiceName");
+  }
 }

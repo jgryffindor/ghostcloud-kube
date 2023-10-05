@@ -8,10 +8,10 @@ import {
   Delete,
   Logger,
 } from "@nestjs/common";
+import { ApiBody } from "@nestjs/swagger";
 import { SitesService } from "./sites.service";
-import { CreateSiteDto } from "./dto/create-site.dto";
-import { UpdateSiteDto } from "./dto/update-site.dto";
-import { KubeService } from "src/kube/kube.service";
+import { CreateIngressDto } from "./dto/create-ingress.dto";
+import { UpdateIngressDto } from "./dto/update-ingress.dto";
 
 @Controller("sites")
 export class SitesController {
@@ -19,9 +19,10 @@ export class SitesController {
 
   private readonly logger = new Logger(SitesController.name);
 
-  @Post()
-  create(@Body() createSiteDto: CreateSiteDto) {
-    return this.sites.create(createSiteDto);
+  @ApiBody({ type: CreateIngressDto })
+  @Post("ingress")
+  create(@Body() createIngressDto: CreateIngressDto) {
+    return this.sites.createIngress(createIngressDto);
   }
 
   @Get("status")
@@ -50,7 +51,7 @@ export class SitesController {
   }
 
   @Patch(":id")
-  update(@Param("id") id: string, @Body() updateSiteDto: UpdateSiteDto) {
+  update(@Param("id") id: string, @Body() updateSiteDto: UpdateIngressDto) {
     return this.sites.update(+id, updateSiteDto);
   }
 

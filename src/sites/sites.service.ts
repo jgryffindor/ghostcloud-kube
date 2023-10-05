@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { CreateSiteDto } from "./dto/create-site.dto";
-import { UpdateSiteDto } from "./dto/update-site.dto";
+import { CreateIngressDto } from "./dto/create-ingress.dto";
+import { UpdateIngressDto } from "./dto/update-ingress.dto";
 import { Deployment, NetworkService } from "../network/network.service";
 import { KubeService } from "../kube/kube.service";
 import { KubeConfigService } from "../config/kube/configuration.service";
@@ -52,11 +52,17 @@ export class SitesService {
     return ingresses;
   }
 
-  create(createSiteDto: CreateSiteDto) {
-    return 'This action adds a new site';
+  async createIngress(i: CreateIngressDto) {
+    const ingress = await this.kube.createIngress(
+      i.namespace,
+      i.sitename,
+      i.deploymentUrl,
+      i.domain,
+    );
+    return ingress;
   }
 
-  update(id: number, updateSiteDto: UpdateSiteDto) {
+  update(id: number, updateIngressDto: UpdateIngressDto) {
     return `This action updates a #${id} site`;
   }
 
