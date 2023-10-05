@@ -1,14 +1,24 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { CreateSiteDto } from "./dto/create-site.dto";
 import { UpdateSiteDto } from "./dto/update-site.dto";
-import { NetworkService } from "src/network/network.service";
-import { KubeService } from "src/kube/kube.service";
+import { Deployment, NetworkService } from "../network/network.service";
+import { KubeService } from "../kube/kube.service";
+import { KubeConfigService } from "../config/kube/configuration.service";
+
+function calculatePages(count: number, pageSize: number) {
+  const pages = Math.ceil(count / pageSize);
+  return pages;
+}
 
 @Injectable()
 export class SitesService {
   private readonly logger = new Logger(SitesService.name);
 
-  constructor(private network: NetworkService, private kube: KubeService) {
+  constructor(
+    private network: NetworkService,
+    private kube: KubeService,
+    private kubeConfig: KubeConfigService,
+  ) {
     this.logger.debug("SitesService constructor");
   }
 
@@ -16,26 +26,34 @@ export class SitesService {
     return this.network.status();
   }
 
-  findAll() {
-    this.network.getWebList();
+  async findAll() {
+    const count = await this.network.getSiteCount();
+    const pageCount = calculatePages(count, 100);
+    const list: Deployment[] = [];
 
-    return `This action returns all sites`;
+    for (let page = 1; page <= pageCount; page++) {
+      const params = { page: page };
+      const webList = await this.network.getWebList(params);
+      list.push(...webList);
+    }
+
+    const filteredList = list.filter((item) => item.domain !== undefined);
+
+    return filteredList;
+  }
+
+  findIngress(name: string) {
+    const ingress = this.kube.getIngress(this.kubeConfig.namespace, name);
+    return ingress;
   }
 
   findAllIngresses() {
-    this.logger.debug("Get all ingresses");
-    const ingresses = this.kube.listIngressResources("ghostcloud");
-    this.logger.debug(`Ingreeses: ${ingresses}`);
-
+    const ingresses = this.kube.getIngressNames(this.kubeConfig.namespace);
     return ingresses;
   }
 
   create(createSiteDto: CreateSiteDto) {
     return 'This action adds a new site';
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} site`;
   }
 
   update(id: number, updateSiteDto: UpdateSiteDto) {

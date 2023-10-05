@@ -1,6 +1,19 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { Base, Events, Network, Web, Ledger } from "@liftedinit/many-js";
+import {
+  Base,
+  Events,
+  Network,
+  Web,
+  Address,
+  WebListParams,
+} from "@liftedinit/many-js";
 import { AppConfigService } from "../config/app/configuration.service";
+
+export interface Deployment {
+  siteName: string;
+  deploymentUrl: string;
+  domain: string;
+}
 
 @Injectable()
 export class NetworkService {
@@ -23,9 +36,27 @@ export class NetworkService {
     return info;
   }
 
-  async getWebList() {
+  async getSiteCount() {
     const list = await this.network.web.list({});
-    this.logger.debug(JSON.stringify(list, undefined, 4));
-    return list;
+    // this.logger.debug(JSON.stringify(list, undefined, 4));
+    const totalCount = list.totalCount;
+    this.logger.debug(`Total site count: ${totalCount}`);
+
+    return totalCount;
+  }
+
+  async getWebList(params: WebListParams) {
+    const list = await this.network.web.list(params);
+    // this.logger.debug(JSON.stringify(list, undefined, 4));
+
+    const deployments = list.deployments;
+    const parsedDeployments = deployments.map((deployment: Deployment) => {
+      const { siteName, deploymentUrl, domain } = deployment;
+      return { siteName, deploymentUrl, domain };
+    });
+
+    // this.logger.debug(parsedDeployments);
+
+    return parsedDeployments;
   }
 }

@@ -36,18 +36,17 @@ export class SitesController {
     return this.sites.findAll();
   }
 
+  @Get(":name")
+  findIngress(@Param("name") name: string) {
+    return this.sites.findIngress(name);
+  }
+
   @Get("ingresses")
   findAllIngresses() {
     this.logger.debug("Get all ingresses");
     const ingresses = this.sites.findAllIngresses();
-    this.logger.debug(`Ingreeses: ${ingresses}`);
 
     return ingresses;
-  }
-
-  @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.sites.findOne(+id);
   }
 
   @Patch(":id")
