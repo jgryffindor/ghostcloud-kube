@@ -4,11 +4,7 @@ import { UpdateIngressDto } from "./dto/update-ingress.dto";
 import { Deployment, NetworkService } from "../network/network.service";
 import { KubeService } from "../kube/kube.service";
 import { KubeConfigService } from "../config/kube/configuration.service";
-
-function calculatePages(count: number, pageSize: number) {
-  const pages = Math.ceil(count / pageSize);
-  return pages;
-}
+import * as dns from 'dns';
 
 @Injectable()
 export class SitesService {
@@ -27,28 +23,19 @@ export class SitesService {
   }
 
   async findAll() {
-    const count = await this.network.getSiteCount();
-    const pageCount = calculatePages(count, 100);
-    const list: Deployment[] = [];
+    const sites = await this.network.getDomainList();
 
-    for (let page = 1; page <= pageCount; page++) {
-      const params = { page: page };
-      const webList = await this.network.getWebList(params);
-      list.push(...webList);
-    }
-
-    const filteredList = list.filter((item) => item.domain !== undefined);
-
-    return filteredList;
+    return sites;
   }
 
   findIngress(name: string) {
-    const ingress = this.kube.getIngress(this.kubeConfig.namespace, name);
+    const ingress = this.kube.getIngress(name, this.kubeConfig.namespace);
     return ingress;
   }
 
   findAllIngresses() {
-    const ingresses = this.kube.getIngressNames(this.kubeConfig.namespace);
+    this.logger.debug(`Namespace: ${this.kubeConfig.namespace}`);
+    const ingresses = this.kube.getIngresses(this.kubeConfig.namespace);
     return ingresses;
   }
 
@@ -68,5 +55,17 @@ export class SitesService {
 
   remove(id: number) {
     return `This action removes a #${id} site`;
+  }
+
+  async checkDnsARecord(domain: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      dns.resolve4(domain, (err, addresses) => {
+        if (err) {
+          resolve(false);
+        } else {
+          resolve(addresses.length > 0);
+        }
+      });
+    });
   }
 }

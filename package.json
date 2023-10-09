@@ -31,6 +31,7 @@
     "@nestjs/swagger": "^7.1.12",
     "common-tags": "^1.8.2",
     "cron": "^2.4.2",
+    "dns": "^0.2.2",
     "joi": "^17.10.2",
     "kubernetes-client": "^9.0.0",
     "reflect-metadata": "^0.1.13",
