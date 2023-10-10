@@ -7,6 +7,11 @@ import {
 import { KubeConfigService } from "../config/kube/configuration.service";
 import { AppConfigService } from "src/config/app/configuration.service";
 
+interface Ingress {
+  name: string;
+  site: string;
+}
+
 @Injectable()
 export class KubeService {
   private readonly logger = new Logger(KubeService.name);
@@ -29,35 +34,42 @@ export class KubeService {
 
     this.k8sCoreApi = this.kc.makeApiClient(CoreV1Api);
     this.k8sNetworkApi = this.kc.makeApiClient(NetworkingV1Api);
-  };
+  }
 
   // kc.loadFromCluster();
 
-  async getIngressNames(namespace: string) {
-    const ingressNames = [];
+  async getIngresses(namespace: string) {
+    const clusterIngresses: Ingress[] = [];
 
     try {
       // Get a list of all ingress resources in a namespace
       const ingressList = await this.k8sNetworkApi.listNamespacedIngress(
         namespace,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        "app=ingress-gc",
       );
 
       ingressList.body.items.forEach((ingress) => {
         const name = ingress.metadata?.name;
+        const site = ingress.metadata?.labels?.site;
+
         if (name) {
-          ingressNames.push(name);
+          clusterIngresses.push({ name, site });
         }
       });
-      this.logger.debug(`Ingress names: ${ingressNames}`);
+      this.logger.debug(`clusterIngresses: ${clusterIngresses}`);
+
+      return clusterIngresses;
     } catch (error) {
       this.logger.error(`Error listing Ingress resources: ${error}`);
       return error.body.message;
     }
-
-    return ingressNames;
   }
 
-  async getIngress(namespace: string, name: string) {
+  async getIngress(name: string, namespace: string) {
     let ingress;
 
     try {
@@ -94,6 +106,10 @@ export class KubeService {
           "kubernetes.io/ingress.class": "nginx",
           "nginx.ingress.kubernetes.io/force-ssl-redirect": "true",
           "nginx.ingress.kubernetes.io/upstream-vhost": deploymentUrl,
+        },
+        labels: {
+          site: sitename,
+          app: "ingress-gc",
         },
       },
       spec: {
@@ -136,6 +152,20 @@ export class KubeService {
       this.logger.debug(`Ingress created: ${JSON.stringify(response)}`);
     } catch (error) {
       this.logger.error(`Error creating Ingress resource: ${error}`);
+      return error.body.message;
+    }
+  }
+
+  async deleteIngress(name: string, namespace: string) {
+    try {
+      // Delete the ingress resource
+      const response = await this.k8sNetworkApi.deleteNamespacedIngress(
+        name,
+        namespace,
+      );
+      this.logger.debug(`Ingress deleted: ${JSON.stringify(response)}`);
+    } catch (error) {
+      this.logger.error(`Error deleting Ingress resource: ${error}`);
       return error.body.message;
     }
   }

@@ -25,6 +25,11 @@ export class NetworkService {
     this.network.apply([Base, Web]);
   }
 
+  calculatePages(count: number, pageSize: number) {
+    const pages = Math.ceil(count / pageSize);
+    return pages;
+  }
+
   async status() {
     const status = await this.network.base.status();
     console.log(JSON.stringify(status));
@@ -37,26 +42,54 @@ export class NetworkService {
   }
 
   async getSiteCount() {
-    const list = await this.network.web.list({});
-    // this.logger.debug(JSON.stringify(list, undefined, 4));
-    const totalCount = list.totalCount;
-    this.logger.debug(`Total site count: ${totalCount}`);
+    try {
+      const list = await this.network.web.list({});
+      const totalCount = list.totalCount;
+      this.logger.debug(`Total site count: ${totalCount}`);
 
-    return totalCount;
+      return totalCount;
+    } catch (error) {
+      this.logger.error(`Errof fetching site count: ${error}`);
+      return error;
+    }
   }
 
   async getWebList(params: WebListParams) {
-    const list = await this.network.web.list(params);
-    // this.logger.debug(JSON.stringify(list, undefined, 4));
+    try {
+      const list = await this.network.web.list(params);
+      const deployments = list.deployments;
+      const parsedDeployments = deployments.map((deployment: Deployment) => {
+        const { siteName, deploymentUrl, domain } = deployment;
+        return { siteName, deploymentUrl, domain };
+      });
 
-    const deployments = list.deployments;
-    const parsedDeployments = deployments.map((deployment: Deployment) => {
-      const { siteName, deploymentUrl, domain } = deployment;
-      return { siteName, deploymentUrl, domain };
-    });
+      return parsedDeployments;
+    } catch (error) {
+      this.logger.error(`Error fetching web.list: ${error}`);
 
-    // this.logger.debug(parsedDeployments);
+      return error;
+    }
+  }
 
-    return parsedDeployments;
+  async getIngressList() {
+    try {
+      const count = await this.getSiteCount();
+      const pageCount = this.calculatePages(count, 100);
+      const list: Deployment[] = [];
+
+      for (let page = 1; page <= pageCount; page++) {
+        const params = { page: page };
+        const webList = await this.getWebList(params);
+        list.push(...webList);
+      }
+
+      const filteredList = list.filter((item) => item.domain !== undefined);
+
+      return filteredList;
+    } catch (error) {
+      this.logger.error(`Error listing domains: ${error}`);
+
+      return error;
+    }
   }
 }

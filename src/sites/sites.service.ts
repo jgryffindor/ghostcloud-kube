@@ -23,7 +23,7 @@ export class SitesService {
   }
 
   async findAll() {
-    const sites = await this.network.getDomainList();
+    const sites = await this.network.getIngressList();
 
     return sites;
   }
