@@ -49,7 +49,8 @@ export class NetworkService {
 
       return totalCount;
     } catch (error) {
-      this.logger.error(`Errof fetching site count: ${error}`);
+      this.logger.error(`Error fetching site count: ${error}`);
+
       return error;
     }
   }
@@ -67,7 +68,7 @@ export class NetworkService {
     } catch (error) {
       this.logger.error(`Error fetching web.list: ${error}`);
 
-      return error;
+      throw error;
     }
   }
 
@@ -89,7 +90,7 @@ export class NetworkService {
     } catch (error) {
       this.logger.error(`Error listing domains: ${error}`);
 
-      return error;
+      throw error;
     }
   }
 }
