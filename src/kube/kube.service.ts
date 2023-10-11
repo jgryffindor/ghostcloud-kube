@@ -64,7 +64,7 @@ export class KubeService {
     } catch (error) {
       this.logger.error(`Error listing Ingress resources: ${error}`);
 
-      return error.body.message;
+      throw error;
     }
   }
 

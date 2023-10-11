@@ -32,6 +32,7 @@ export class NetworkUpdater {
 
     let clusterIngresses: ClusterIngress[];
     let networkIngresses: NetworkIngress[];
+    let createIngressList: NetworkIngress[];
     let deleteIgressList: ClusterIngress[];
     // Get a list of all ingresses in the cluster.
 
@@ -42,8 +43,6 @@ export class NetworkUpdater {
       );
     } catch (error) {
       this.logger.error(`Error fetching cluster ingress list ${error}`);
-
-      throw error;
     }
 
     // Get a list of all ingresses in the network.
@@ -54,26 +53,27 @@ export class NetworkUpdater {
       );
     } catch (error) {
       this.logger.error(`Error fetching network ingress list: ${error}`);
-
-      throw error;
     }
 
     // Compare the clusterIngresses to networkIngresses and
     // find ingresses that are not in the cluster.
-    const createIngressList: NetworkIngress[] = networkIngresses.filter(
-      (networkIngress) => {
+    if (clusterIngresses && clusterIngresses.length > 0) {
+      createIngressList = networkIngresses.filter((networkIngress) => {
         return !clusterIngresses.some(
           (clusterIngress) => clusterIngress.site === networkIngress.siteName,
         );
-      },
-    );
+      });
+    } else {
+      createIngressList = [];
+      this.logger.debug("No ingresses to create");
+    }
 
     this.logger.debug(
       `ingresses to create: ${JSON.stringify(createIngressList)}`,
     );
 
     // Find ingresses that should be deleted
-    if (networkIngresses.length > 0) {
+    if (networkIngresses && networkIngresses.length > 0) {
       deleteIgressList = clusterIngresses.filter((clusterIngress) => {
         return !networkIngresses.some(
           (networkIngress) => networkIngress.siteName === clusterIngress.site,
@@ -91,27 +91,29 @@ export class NetworkUpdater {
     }
 
     // Add ingresses that are not in the cluster.
-    for (const i of createIngressList) {
-      this.logger.debug(`Creating ingress ${i}`);
-      const sitename = i.siteName;
-      const deploymentUrl = i.deploymentUrl;
-      const domain = i.domain;
+    if (createIngressList.length > 0) {
+      for (const i of createIngressList) {
+        this.logger.debug(`Creating ingress ${i}`);
+        const sitename = i.siteName;
+        const deploymentUrl = i.deploymentUrl;
+        const domain = i.domain;
 
-      const hasAddress = await this.site.checkDnsARecord(domain);
+        const hasAddress = await this.site.checkDnsARecord(domain);
 
-      if (hasAddress) {
-        try {
-          await this.kube.createIngress(
-            this.kc.namespace,
-            sitename,
-            deploymentUrl,
-            domain,
-          );
-        } catch (error) {
-          this.logger.error(`Error creating ingress: ${error}`);
+        if (hasAddress) {
+          try {
+            await this.kube.createIngress(
+              this.kc.namespace,
+              sitename,
+              deploymentUrl,
+              domain,
+            );
+          } catch (error) {
+            this.logger.error(`Error creating ingress: ${error}`);
+          }
+        } else {
+          this.logger.error(`No DNS A record found for ${domain}`);
         }
-      } else {
-        this.logger.error(`No DNS A record found for ${domain}`);
       }
     }
 
