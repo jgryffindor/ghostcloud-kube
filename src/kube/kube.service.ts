@@ -7,7 +7,7 @@ import {
 import { KubeConfigService } from "../config/kube/configuration.service";
 import { AppConfigService } from "src/config/app/configuration.service";
 
-interface Ingress {
+export interface Ingress {
   name: string;
   site: string;
 }

@@ -1,10 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { CreateIngressDto } from "./dto/create-ingress.dto";
 import { UpdateIngressDto } from "./dto/update-ingress.dto";
-import { Deployment, NetworkService } from "../network/network.service";
-import { KubeService } from "../kube/kube.service";
+import { NetworkService } from "../network/network.service";
+import { KubeService, Ingress as KubeIngress } from "../kube/kube.service";
 import { KubeConfigService } from "../config/kube/configuration.service";
-import * as dns from 'dns';
+import * as dns from "dns";
 
 @Injectable()
 export class SitesService {
@@ -33,7 +33,7 @@ export class SitesService {
     return ingress;
   }
 
-  findAllIngresses() {
+  async findAllIngresses(): Promise<KubeIngress[]> {
     this.logger.debug(`Namespace: ${this.kubeConfig.namespace}`);
     const ingresses = this.kube.getIngresses(this.kubeConfig.namespace);
     return ingresses;
