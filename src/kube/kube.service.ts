@@ -36,8 +36,6 @@ export class KubeService {
     this.k8sNetworkApi = this.kc.makeApiClient(NetworkingV1Api);
   }
 
-  // kc.loadFromCluster();
-
   async getIngresses(namespace: string) {
     const clusterIngresses: Ingress[] = [];
 
@@ -65,6 +63,7 @@ export class KubeService {
       return clusterIngresses;
     } catch (error) {
       this.logger.error(`Error listing Ingress resources: ${error}`);
+
       return error.body.message;
     }
   }
@@ -76,12 +75,13 @@ export class KubeService {
       // Get a list of all ingress resources in a namespace
       ingress = await this.k8sNetworkApi.readNamespacedIngress(name, namespace);
       this.logger.debug(`Single Ingress: ${JSON.stringify(ingress)}`);
+
+      return ingress;
     } catch (error) {
       this.logger.error(`Error listing Ingress resources: ${error}`);
+
       return error.body.message;
     }
-
-    return ingress;
   }
 
   async createIngress(
@@ -101,11 +101,14 @@ export class KubeService {
         name: `ingress-gc-${this.appConfig.env}-${sitename}`,
         namespace: namespace,
         annotations: {
-          "acme.cert-manager.io/http01-edit-in-place": "true",
           "cert-manager.io/cluster-issuer": "letsencrypt-cluster-prod",
           "kubernetes.io/ingress.class": "nginx",
           "nginx.ingress.kubernetes.io/force-ssl-redirect": "true",
           "nginx.ingress.kubernetes.io/upstream-vhost": deploymentUrl,
+          "nginx.ingress.kubernetes.io/server-snippet": ` 
+              location /.well-known/ {
+                proxy_set_header Host "${domain}";
+              }`,
         },
         labels: {
           site: sitename,
@@ -145,13 +148,16 @@ export class KubeService {
 
     try {
       // Create the ingress resource
-      const response = await this.k8sNetworkApi.createNamespacedIngress(
+      const ingressCreated = await this.k8sNetworkApi.createNamespacedIngress(
         namespace,
         ingress,
       );
-      this.logger.debug(`Ingress created: ${JSON.stringify(response)}`);
+      this.logger.debug(`Ingress created: ${JSON.stringify(ingressCreated)}`);
+
+      return ingress;
     } catch (error) {
       this.logger.error(`Error creating Ingress resource: ${error}`);
+
       return error.body.message;
     }
   }
@@ -166,7 +172,21 @@ export class KubeService {
       this.logger.debug(`Ingress deleted: ${JSON.stringify(response)}`);
     } catch (error) {
       this.logger.error(`Error deleting Ingress resource: ${error}`);
+
       return error.body.message;
     }
   }
+
+  // async updateIngress(name: string, namespace: string, solverService: string) {
+  //   // Update the ingress with a path to the solver service
+  //   const ingressResponse = await coreV1Api.readNamespacedIngress(ingressName, namespace);
+  //   const ingress: V1Ingress = ingressResponse.body;
+
+  //   const certSolverPath: V1HTTPIngressPath[] = [
+  //     {
+  //       path: '/.well-known/acme-challenge',  // Modify the path to the desired value
+  //       backend: ingress.spec?.rules[0].http?.paths[0].backend as V1IngressBackend,
+  //     },
+  //   ];
+  // {
 }
