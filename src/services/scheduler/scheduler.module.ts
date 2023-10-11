@@ -8,6 +8,7 @@ import { ConfigService } from "@nestjs/config";
 import { AppConfigService } from "../../config/app/configuration.service";
 import { KubeService } from "../../kube/kube.service";
 import { KubeConfigService } from "../..//config/kube/configuration.service";
+import { SitesService } from "src/sites/sites.service";
 
 @Module({
   controllers: [SchedulerController],
@@ -20,6 +21,7 @@ import { KubeConfigService } from "../..//config/kube/configuration.service";
     NetworkService,
     NetworkUpdater,
     ConfigService,
+    SitesService,
   ],
   exports: [SchedulerService],
 })
