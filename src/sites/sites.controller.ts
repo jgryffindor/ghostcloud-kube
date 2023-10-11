@@ -25,6 +25,11 @@ export class SitesController {
     return this.sites.createIngress(createIngressDto);
   }
 
+  @Post(":name")
+  checkDnsARecord(@Param("name") name: string) {
+    return this.sites.checkDnsARecord(name);
+  }
+
   @Get("status")
   status() {
     this.logger.debug("Get all sites");

@@ -58,12 +58,14 @@ export class SitesService {
   }
 
   async checkDnsARecord(domain: string): Promise<boolean> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       dns.resolve4(domain, (err, addresses) => {
         if (err) {
           resolve(false);
         } else {
-          resolve(addresses.length > 0);
+          const hasAddresses = addresses.length > 0;
+          this.logger.debug(`DNS resolution for ${domain}: ${addresses}`);
+          resolve(hasAddresses);
         }
       });
     });
