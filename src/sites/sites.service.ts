@@ -57,15 +57,16 @@ export class SitesService {
     return `This action removes a #${id} site`;
   }
 
-  async checkDnsARecord(domain: string): Promise<boolean> {
+  async checkDnsARecord(domain: string): Promise<[boolean, string | null]> {
     return new Promise((resolve) => {
       dns.resolve4(domain, (err, addresses) => {
         if (err) {
-          resolve(false);
+          resolve([false, null]);
         } else {
           const hasAddresses = addresses.length > 0;
+          const ipAddress = hasAddresses ? addresses[0] : null;
           this.logger.debug(`DNS resolution for ${domain}: ${addresses}`);
-          resolve(hasAddresses);
+          resolve([hasAddresses, ipAddress]);
         }
       });
     });

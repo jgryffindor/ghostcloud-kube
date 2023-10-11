@@ -100,7 +100,7 @@ export class NetworkUpdater {
 
         const hasAddress = await this.site.checkDnsARecord(domain);
 
-        if (hasAddress) {
+        if (hasAddress[0] && hasAddress[1] == this.kc.ingressIp) {
           try {
             await this.kube.createIngress(
               this.kc.namespace,

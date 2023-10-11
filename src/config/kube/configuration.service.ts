@@ -22,4 +22,7 @@ export class KubeConfigService {
   get proxyServiceName(){
     return this.configService.get<string>("kube.proxyServiceName");
   }
+  get ingressIp(){
+    return this.configService.get<string>("kube.ingressIp");
+  }
 }
