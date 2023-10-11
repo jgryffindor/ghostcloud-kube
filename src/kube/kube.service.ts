@@ -176,17 +176,4 @@ export class KubeService {
       return error.body.message;
     }
   }
-
-  // async updateIngress(name: string, namespace: string, solverService: string) {
-  //   // Update the ingress with a path to the solver service
-  //   const ingressResponse = await coreV1Api.readNamespacedIngress(ingressName, namespace);
-  //   const ingress: V1Ingress = ingressResponse.body;
-
-  //   const certSolverPath: V1HTTPIngressPath[] = [
-  //     {
-  //       path: '/.well-known/acme-challenge',  // Modify the path to the desired value
-  //       backend: ingress.spec?.rules[0].http?.paths[0].backend as V1IngressBackend,
-  //     },
-  //   ];
-  // {
 }
