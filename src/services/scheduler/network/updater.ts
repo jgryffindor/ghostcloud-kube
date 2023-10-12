@@ -1,5 +1,4 @@
 import { Injectable, Logger } from "@nestjs/common";
-import cluster from "cluster";
 import { KubeConfigService } from "src/config/kube/configuration.service";
 import { KubeService } from "src/kube/kube.service";
 import { NetworkService } from "src/network/network.service";
@@ -42,6 +41,7 @@ export class NetworkUpdater {
         `clusterIngresses: ${JSON.stringify(clusterIngresses)}`,
       );
     } catch (error) {
+      clusterIngresses = undefined;
       this.logger.error(`Error fetching cluster ingress list ${error}`);
     }
 
@@ -52,28 +52,33 @@ export class NetworkUpdater {
         `networkIngresses: ${JSON.stringify(networkIngresses)}`,
       );
     } catch (error) {
+      networkIngresses = undefined;
       this.logger.error(`Error fetching network ingress list: ${error}`);
     }
 
     // Compare the clusterIngresses to networkIngresses and
     // find ingresses that are not in the cluster.
-    if (clusterIngresses && clusterIngresses.length > 0) {
+    if (clusterIngresses) {
       createIngressList = networkIngresses.filter((networkIngress) => {
         return !clusterIngresses.some(
           (clusterIngress) => clusterIngress.site === networkIngress.siteName,
         );
       });
+
+      this.logger.debug(
+        `ingresses to create: ${JSON.stringify(createIngressList)}`,
+      );
     } else {
       createIngressList = [];
       this.logger.debug("No ingresses to create");
     }
 
-    this.logger.debug(
-      `ingresses to create: ${JSON.stringify(createIngressList)}`,
-    );
-
     // Find ingresses that should be deleted
-    if (networkIngresses && networkIngresses.length > 0) {
+    if (
+      networkIngresses &&
+      networkIngresses.length > 0 &&
+      clusterIngresses !== undefined
+    ) {
       deleteIgressList = clusterIngresses.filter((clusterIngress) => {
         return !networkIngresses.some(
           (networkIngress) => networkIngress.siteName === clusterIngress.site,
@@ -81,9 +86,6 @@ export class NetworkUpdater {
       });
       this.logger.debug(
         `ingresses to delete: ${JSON.stringify(deleteIgressList)}`,
-      );
-      this.logger.debug(
-        `length of ingresses to delete: ${deleteIgressList.length}`,
       );
     } else {
       deleteIgressList = [];
