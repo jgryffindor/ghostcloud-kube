@@ -5,7 +5,6 @@ import {
   NetworkingV1Api,
 } from "@kubernetes/client-node";
 import { KubeConfigService } from "../config/kube/configuration.service";
-import { AppConfigService } from "src/config/app/configuration.service";
 
 export interface Ingress {
   name: string;
@@ -19,10 +18,7 @@ export class KubeService {
   private k8sCoreApi: CoreV1Api;
   private k8sNetworkApi: NetworkingV1Api;
 
-  constructor(
-    private kubeConfig: KubeConfigService,
-    private appConfig: AppConfigService,
-  ) {
+  constructor(private kubeConfig: KubeConfigService) {
     this.kc = new KubeConfig();
     this.logger.debug("KubeService constructor");
 
@@ -47,7 +43,7 @@ export class KubeService {
         undefined,
         undefined,
         undefined,
-        "app=ingress-gc",
+        `app=ingress-gc,tier=${this.kubeConfig.tier}`,
       );
 
       ingressList.body.items.forEach((ingress) => {
@@ -98,7 +94,7 @@ export class KubeService {
       apiVersion: "networking.k8s.io/v1",
       kind: "Ingress",
       metadata: {
-        name: `ingress-gc-${this.appConfig.env}-${sitename}`,
+        name: `ingress-gc-${this.kubeConfig.tier}-${sitename}`,
         namespace: namespace,
         annotations: {
           "cert-manager.io/cluster-issuer": "letsencrypt-cluster-prod",
@@ -113,6 +109,7 @@ export class KubeService {
         labels: {
           site: sitename,
           app: "ingress-gc",
+          tier: this.kubeConfig.tier,
         },
       },
       spec: {

@@ -7,4 +7,5 @@ export default registerAs("kube", () => ({
   apiUrl: process.env.KUBE_API_URL,
   proxyServiceName: process.env.KUBE_PROXY_SERVICE_NAME,
   ingressIp: process.env.KUBE_INGRESS_IP,
+  tier: process.env.KUBE_TIER,
 }));

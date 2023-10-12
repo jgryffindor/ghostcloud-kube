@@ -19,10 +19,13 @@ export class KubeConfigService {
   get apiUrl() {
     return this.configService.get<string>("kube.apiUrl");
   }
-  get proxyServiceName(){
+  get proxyServiceName() {
     return this.configService.get<string>("kube.proxyServiceName");
   }
-  get ingressIp(){
+  get ingressIp() {
     return this.configService.get<string>("kube.ingressIp");
+  }
+  get tier() {
+    return this.configService.get<string>("kube.tier");
   }
 }
