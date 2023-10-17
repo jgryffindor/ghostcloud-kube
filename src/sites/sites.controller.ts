@@ -30,6 +30,11 @@ export class SitesController {
     return this.sites.checkDnsARecord(name);
   }
 
+  @Post(":name/cname") 
+  checkDnsCnameRecord(@Param("name") name: string) {
+    return this.sites.checkDnsCnameRecord(name);
+  }
+
   @Get("status")
   status() {
     this.logger.debug("Get all sites");

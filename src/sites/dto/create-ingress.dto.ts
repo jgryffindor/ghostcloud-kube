@@ -12,4 +12,7 @@ export class CreateIngressDto {
 
   @ApiProperty()
   domain: string;
+
+  @ApiProperty()
+  wwwDomain: boolean;
 }
