@@ -45,6 +45,7 @@ export class SitesService {
       i.sitename,
       i.deploymentUrl,
       i.domain,
+      i.wwwDomain,
     );
     return ingress;
   }
@@ -67,6 +68,21 @@ export class SitesService {
           const ipAddress = hasAddresses ? addresses[0] : null;
           this.logger.debug(`DNS resolution for ${domain}: ${addresses}`);
           resolve([hasAddresses, ipAddress]);
+        }
+      });
+    });
+  }
+
+  async checkDnsCnameRecord(domain: string): Promise<[boolean, string | null]> {
+    return new Promise((resolve) => {
+      dns.resolveCname(domain, (err, addresses) => {
+        if (err) {
+          resolve([false, null]);
+        } else {
+          const hasAddresses = addresses.length > 0;
+          const cnameAddress = hasAddresses ? addresses[0] : null;
+          this.logger.debug(`DNS CNAME resolution for ${domain}: ${addresses}`);
+          resolve([hasAddresses, cnameAddress]);
         }
       });
     });
