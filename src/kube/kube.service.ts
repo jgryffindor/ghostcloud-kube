@@ -85,9 +85,16 @@ export class KubeService {
     sitename: string,
     deploymentUrl: string,
     domain: string,
+    wwwDomain: boolean,
   ) {
     // Strip https from the deploymentUrl
     deploymentUrl = deploymentUrl.replace(/^https?:\/\//, "");
+
+    const hostList = [domain];
+
+    if (wwwDomain) {
+      hostList.push(`www.${domain}`);
+    }
 
     // create an ingress resource object
     const ingress = {
@@ -100,6 +107,7 @@ export class KubeService {
           "cert-manager.io/cluster-issuer": "letsencrypt-cluster-prod",
           "kubernetes.io/ingress.class": "nginx",
           "nginx.ingress.kubernetes.io/force-ssl-redirect": "true",
+          "nginx.ingress.kubernetes.io/from-to-www-redirect": "true",
           "nginx.ingress.kubernetes.io/upstream-vhost": deploymentUrl,
           "nginx.ingress.kubernetes.io/server-snippet": ` 
               location /.well-known/ {
@@ -136,7 +144,7 @@ export class KubeService {
         ],
         tls: [
           {
-            hosts: [domain],
+            hosts: hostList,
             secretName: `${sitename}-tls-secret`,
           },
         ],
