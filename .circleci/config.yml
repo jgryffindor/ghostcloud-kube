@@ -52,6 +52,8 @@ workflows:
           context:
             - DOCKER_CREDS
           filters:
+            branches:
+              ignore: /.*/
             tags:
               only:
                 - /^v?\d(\.\d){2}$/ # e.g. major, minor, patch (0.1.1)
