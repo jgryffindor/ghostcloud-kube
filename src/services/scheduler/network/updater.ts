@@ -95,27 +95,29 @@ export class NetworkUpdater {
     // Add ingresses that are not in the cluster.
     if (createIngressList.length > 0) {
       for (const i of createIngressList) {
-        this.logger.debug(`Creating ingress ${i}`);
         const sitename = i.siteName;
         const deploymentUrl = i.deploymentUrl;
         const domain = i.domain;
 
         const hasAddress = await this.site.checkDnsARecord(domain);
 
-        const hasWwwDomain = await this.site.checkDnsCnameRecord(
-          `www.${domain}`,
-        );
-        let wwwDomain: boolean;
-
-        if (hasWwwDomain[0] && hasWwwDomain[1] == domain) {
-          this.logger.debug(`DNS CNAME record found for www.${domain}`);
-          wwwDomain = true;
-        } else {
-          this.logger.debug(`No DNS CNAME record found for www.${domain}`);
-          wwwDomain = false;
-        }
-
         if (hasAddress[0] && hasAddress[1] == this.kc.ingressIp) {
+          this.logger.debug(`Creating ingress for ${domain}`);
+
+          let wwwDomain: boolean;
+
+          const hasWwwDomain = await this.site.checkDnsCnameRecord(
+            `www.${domain}`,
+          );
+
+          if (hasWwwDomain[0] && hasWwwDomain[1] == domain) {
+            this.logger.debug(`DNS CNAME record found for www.${domain}`);
+            wwwDomain = true;
+          } else {
+            this.logger.debug(`No DNS CNAME record found for www.${domain}`);
+            wwwDomain = false;
+          }
+
           try {
             await this.kube.createIngress(
               this.kc.namespace,
