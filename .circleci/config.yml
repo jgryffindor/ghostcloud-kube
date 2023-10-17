@@ -1,0 +1,73 @@
+# ghostcloud CI
+# The Lifted Initiative
+version: 2.1
+
+orbs:
+  node: circleci/node@5.1.0
+
+jobs:
+  test-build:
+    parameters:
+      node_version:
+        type: string
+    executor:
+      name: node/default
+      tag: << parameters.node_version >>
+    resource_class: medium+
+    steps:
+      - install-packages
+      - run:
+          name: Build app
+          command: npm run build
+
+  docker-build:
+    docker:
+      - image: docker:20.10.22
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run:
+          name: Build and push Docker image
+          command: |
+            docker build -t lifted/ghostcloud-kube:${CIRCLE_TAG} .
+            docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
+            docker push lifted/ghostcloud-kube:${CIRCLE_TAG}
+
+workflows:
+  ci:
+    jobs:
+      - test-build:
+          matrix:
+            parameters:
+              node_version:
+                - "18.17.1"
+
+  release:
+    when:
+      not:
+        equal: [scheduled_pipeline, << pipeline.trigger_source >>]
+    jobs:
+      - docker-build:
+          parameters:
+            release_id:
+              type: string
+              default: "RELEASE"
+          context:
+            - DOCKER_CREDS
+          filters:
+            tags:
+              only:
+                - /^v?\d(\.\d){2}$/ # e.g. major, minor, patch (0.1.1)
+                - /^v?\d(\.\d){2}(-[\w-]+(\.[\w-]+)?)$/ # prereleases (0.1.1-alpha.8)
+
+commands:
+  install-packages:
+    description: Checkout and install packages
+    steps:
+      - checkout
+      - run:
+          name: Versions
+          command: node -v && npm -v
+      - node/install-packages:
+          pkg-manager: npm
