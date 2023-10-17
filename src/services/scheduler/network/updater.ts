@@ -102,6 +102,19 @@ export class NetworkUpdater {
 
         const hasAddress = await this.site.checkDnsARecord(domain);
 
+        const hasWwwDomain = await this.site.checkDnsCnameRecord(
+          `www.${domain}`,
+        );
+        let wwwDomain: boolean;
+
+        if (hasWwwDomain[0] && hasWwwDomain[1] == domain) {
+          this.logger.debug(`DNS CNAME record found for www.${domain}`);
+          wwwDomain = true;
+        } else {
+          this.logger.debug(`No DNS CNAME record found for www.${domain}`);
+          wwwDomain = false;
+        }
+
         if (hasAddress[0] && hasAddress[1] == this.kc.ingressIp) {
           try {
             await this.kube.createIngress(
@@ -109,6 +122,7 @@ export class NetworkUpdater {
               sitename,
               deploymentUrl,
               domain,
+              wwwDomain,
             );
           } catch (error) {
             this.logger.error(`Error creating ingress: ${error}`);
