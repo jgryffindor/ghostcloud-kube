@@ -8,8 +8,10 @@ import {
   WebListParams,
 } from "@liftedinit/many-js";
 import { AppConfigService } from "../config/app/configuration.service";
+import { parseAddress } from "../utils/protocol/address";
 
 export interface Deployment {
+  owner: Address;
   siteName: string;
   deploymentUrl: string;
   domain: string;
@@ -60,8 +62,13 @@ export class NetworkService {
       const list = await this.network.web.list(params);
       const deployments = list.deployments;
       const parsedDeployments = deployments.map((deployment: Deployment) => {
-        const { siteName, deploymentUrl, domain } = deployment;
-        return { siteName, deploymentUrl, domain };
+        const { owner, siteName, domain } = deployment;
+        const address = parseAddress(owner).toString();
+        const deploymentUrl = `${siteName}-${address.toString()}.${
+          this.appConfig.domain
+        }}`;
+
+        return { address, siteName, deploymentUrl, domain };
       });
 
       return parsedDeployments;
