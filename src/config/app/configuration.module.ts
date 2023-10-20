@@ -13,6 +13,7 @@ const validationSchema = Joi.object({
   APP_PORT: Joi.number().default(3000),
   APP_DEBUG: Joi.boolean().default(false),
   APP_NETWORK: Joi.string().uri({ allowRelative: true }),
+  APP_DOMAIN: Joi.string().default("manyprotocol.org"),
 });
 
 /**

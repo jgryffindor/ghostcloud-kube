@@ -32,4 +32,7 @@ export class AppConfigService {
   get debug() {
     return this.isDev || this.configService.get<boolean>("app.debug");
   }
+  get domain() {
+    return this.configService.get<string>("app.domain");
+  }
 }
