@@ -25,7 +25,9 @@ export class AppConfigService {
   get port() {
     return Number(this.configService.get<number>("app.port"));
   }
-
+  get domain() {
+    return this.configService.get<string>("app.domain");
+  }
   get isDev() {
     return this.env == "development" || this.env == "dev";
   }
