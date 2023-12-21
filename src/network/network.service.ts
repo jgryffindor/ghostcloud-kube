@@ -1,13 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
-import {
-  Base,
-  Events,
-  Network,
-  Web,
-  Address,
-  WebListParams,
-} from "@liftedinit/many-js";
 import { AppConfigService } from "../config/app/configuration.service";
+import axios, { AxiosResponse } from "axios";
 
 export interface Deployment {
   siteName: string;
@@ -15,15 +8,24 @@ export interface Deployment {
   domain: string;
 }
 
+// Define the interface for the response data
+interface ApiResponse {
+  meta: MetaItem[];
+}
+
+// Define the interface for the 'meta' array items
+interface MetaItem {
+  creator: string;
+  name: string;
+  description: string;
+  domain: string;
+}
+
 @Injectable()
 export class NetworkService {
-  private network: Network;
   private readonly logger = new Logger(NetworkService.name);
 
-  constructor(private appConfig: AppConfigService) {
-    this.network = new Network(this.appConfig.network);
-    this.network.apply([Base, Web]);
-  }
+  constructor(private appConfig: AppConfigService) {}
 
   calculatePages(count: number, pageSize: number) {
     const pages = Math.ceil(count / pageSize);
@@ -31,23 +33,28 @@ export class NetworkService {
   }
 
   async status() {
-    const status = await this.network.base.status();
-    console.log(JSON.stringify(status));
-  }
+    const response = await axios.get(
+      `${this.appConfig.network}/cosmos/base/tendermint/v1beta1/node_info`,
+    );
 
-  async getWebInfo() {
-    const info = await this.network.web.info();
-    this.logger.debug(JSON.stringify(info));
-    return info;
+    this.logger.debug(`Node info: ${JSON.stringify(response.data)}`);
   }
 
   async getSiteCount() {
     try {
-      const list = await this.network.web.list({});
-      const totalCount = list.totalCount;
-      this.logger.debug(`Total site count: ${totalCount}`);
+      const response = await axios.get<ApiResponse>(
+        `${this.appConfig.network}/ghostcloud/ghostcloud/deployments`,
+      );
 
-      return totalCount;
+      // Access the 'meta' array of deployment info
+      const metaArray = response.data.meta;
+
+      if (metaArray) {
+        // count items in metaArray
+        const count = metaArray.length;
+
+        return count;
+      }
     } catch (error) {
       this.logger.error(`Error fetching site count: ${error}`);
 
@@ -55,16 +62,29 @@ export class NetworkService {
     }
   }
 
-  async getWebList(params: WebListParams) {
+  async getWebList(params: any) {
     try {
-      const list = await this.network.web.list(params);
-      const deployments = list.deployments;
-      const parsedDeployments = deployments.map((deployment: Deployment) => {
-        const { siteName, deploymentUrl, domain } = deployment;
+      // Make a GET request to the API endpoint
+      const response = await axios.get<ApiResponse>(
+        `${this.appConfig.network}/ghostcloud/ghostcloud/deployments`,
+        { params },
+      );
+
+      // Access the 'meta' array of deployment info
+      const metaArray = response.data.meta;
+
+      // map metaarray into deployments
+      const deployments = metaArray.map((metaitem: MetaItem) => {
+        const deploymentUrl = `https://${metaitem.name}-${metaitem.creator}.${this.appConfig.domain}`;
+        const siteName = metaitem.name;
+
+        // Check if domain is set or set to undefined if not
+        const domain = metaitem.domain ? metaitem.domain : undefined;
+
         return { siteName, deploymentUrl, domain };
       });
 
-      return parsedDeployments;
+      return deployments;
     } catch (error) {
       this.logger.error(`Error fetching web.list: ${error}`);
 
