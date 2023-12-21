@@ -101,6 +101,7 @@ export class NetworkUpdater {
 
         const hasAddress = await this.site.checkDnsARecord(domain);
 
+        // Check if dns query returns true and the address is the ingress IP
         if (hasAddress[0] && hasAddress[1] == this.kc.ingressIp) {
           this.logger.debug(`Creating ingress for ${domain}`);
 
