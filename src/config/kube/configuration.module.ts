@@ -8,7 +8,7 @@ const validationSchema = Joi.object({
   KUBE_KUBECONFIG: Joi.string(),
   KUBE_NAMESPACE: Joi.string().default("default"),
   KUBE_API_URL: Joi.string().uri({ allowRelative: false }),
-  KUBE_PROXY_SERVICE_NAME: Joi.string().default("many-ghostcloud-http-proxy"),
+  KUBE_PROXY_SERVICE_NAME: Joi.string().default("ghostcloud-http-proxy"),
   KUBE_INGRESS_IP: Joi.string().ip(),
   KUBE_TIER: Joi.string().default("dev"),
 });

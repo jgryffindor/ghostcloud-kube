@@ -86,7 +86,9 @@ export class NetworkService {
 
       return deployments;
     } catch (error) {
-      this.logger.error(`Error fetching web.list: ${error}`);
+      this.logger.error(
+        `Error fetching ghostcloud/ghostcloud/deployments: ${error}`,
+      );
 
       throw error;
     }
