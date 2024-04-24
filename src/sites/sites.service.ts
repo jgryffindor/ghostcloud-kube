@@ -4,11 +4,12 @@ import { UpdateIngressDto } from "./dto/update-ingress.dto";
 import { NetworkService } from "../network/network.service";
 import { KubeService, Ingress as KubeIngress } from "../kube/kube.service";
 import { KubeConfigService } from "../config/kube/configuration.service";
-import * as dns from "dns";
+import { UDPClient } from "dns2";
 
 @Injectable()
 export class SitesService {
   private readonly logger = new Logger(SitesService.name);
+  private readonly dnsClient = UDPClient();
 
   constructor(
     private network: NetworkService,
@@ -59,32 +60,28 @@ export class SitesService {
   }
 
   async checkDnsARecord(domain: string): Promise<[boolean, string | null]> {
-    return new Promise((resolve) => {
-      dns.resolve4(domain, (err, addresses) => {
-        if (err) {
-          resolve([false, null]);
-        } else {
-          const hasAddresses = addresses.length > 0;
-          const ipAddress = hasAddresses ? addresses[0] : null;
-          this.logger.debug(`DNS resolution for ${domain}: ${addresses}`);
-          resolve([hasAddresses, ipAddress]);
-        }
-      });
-    });
+    const aRecord = await this.dnsClient(domain);
+
+    // Check if response and anser is Type 1 for A record
+    if (aRecord.answers.length > 0 && aRecord.answers[0].type == 1) {
+      this.logger.debug(`aRecord: ${JSON.stringify(aRecord.answers)}`);
+      // return boolean and ip address
+      return [true, aRecord.answers[0].address];
+    } else {
+      return [false, null];
+    }
   }
 
   async checkDnsCnameRecord(domain: string): Promise<[boolean, string | null]> {
-    return new Promise((resolve) => {
-      dns.resolveCname(domain, (err, addresses) => {
-        if (err) {
-          resolve([false, null]);
-        } else {
-          const hasAddresses = addresses.length > 0;
-          const cnameAddress = hasAddresses ? addresses[0] : null;
-          this.logger.debug(`DNS CNAME resolution for ${domain}: ${addresses}`);
-          resolve([hasAddresses, cnameAddress]);
-        }
-      });
-    });
+    const cnameRecord = await this.dnsClient(domain);
+
+    // Check if response and anser is Type 5 for CNAME record
+    if (cnameRecord.answers.length > 0 && cnameRecord.answers[0].type == 5) {
+      this.logger.debug(`cnameRecord: ${JSON.stringify(cnameRecord.answers)}`);
+      // return boolean and ip address
+      return [true, cnameRecord.answers[0].domain];
+    } else {
+      return [false, null];
+    }
   }
 }
